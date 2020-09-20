@@ -30,8 +30,8 @@ import lombok.ToString;
 @EqualsAndHashCode
 @ToString
 public final class RouteMapper {
-    
-    private final String logicName;
-    
-    private final String actualName;
+
+    private final String logicName;//逻辑表名
+
+    private final String actualName;//真实表名
 }

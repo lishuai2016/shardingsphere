@@ -28,61 +28,61 @@ import java.util.Properties;
 
 /**
  * Snowflake distributed primary key generator.
- * 
+ *
  * <p>
  * Use snowflake algorithm. Length is 64 bit.
  * </p>
- * 
+ *
  * <pre>
  * 1bit sign bit.
  * 41bits timestamp offset from 2016.11.01(ShardingSphere distributed primary key published data) to now.
  * 10bits worker process id.
  * 12bits auto increment offset in one mills
  * </pre>
- * 
+ *
  * <p>
  * Call @{@code SnowflakeShardingKeyGenerator.setWorkerId} to set worker id, default value is 0.
  * </p>
- * 
+ *
  * <p>
  * Call @{@code SnowflakeShardingKeyGenerator.setMaxTolerateTimeDifferenceMilliseconds} to set max tolerate time difference milliseconds, default value is 0.
  * </p>
  */
 public final class SnowflakeShardingKeyGenerator implements ShardingKeyGenerator {
-    
+
     public static final long EPOCH;
-    
+
     private static final long SEQUENCE_BITS = 12L;
-    
+
     private static final long WORKER_ID_BITS = 10L;
-    
+
     private static final long SEQUENCE_MASK = (1 << SEQUENCE_BITS) - 1;
-    
+
     private static final long WORKER_ID_LEFT_SHIFT_BITS = SEQUENCE_BITS;
-    
+
     private static final long TIMESTAMP_LEFT_SHIFT_BITS = WORKER_ID_LEFT_SHIFT_BITS + WORKER_ID_BITS;
-    
+
     private static final long WORKER_ID_MAX_VALUE = 1L << WORKER_ID_BITS;
-    
+
     private static final long WORKER_ID = 0;
-    
+
     private static final int DEFAULT_VIBRATION_VALUE = 1;
-    
+
     private static final int MAX_TOLERATE_TIME_DIFFERENCE_MILLISECONDS = 10;
-    
+
     @Setter
     private static TimeService timeService = new TimeService();
-    
+
     @Getter
     @Setter
     private Properties properties = new Properties();
-    
+
     private int sequenceOffset = -1;
-    
+
     private long sequence;
-    
+
     private long lastMilliseconds;
-    
+
     static {
         Calendar calendar = Calendar.getInstance();
         calendar.set(2016, Calendar.NOVEMBER, 1);
@@ -92,58 +92,58 @@ public final class SnowflakeShardingKeyGenerator implements ShardingKeyGenerator
         calendar.set(Calendar.MILLISECOND, 0);
         EPOCH = calendar.getTimeInMillis();
     }
-    
+
     @Override
     public String getType() {
         return "SNOWFLAKE";
     }
-    
+
     @Override
-    public synchronized Comparable<?> generateKey() {
-        long currentMilliseconds = timeService.getCurrentMillis();
-        if (waitTolerateTimeDifferenceIfNeed(currentMilliseconds)) {
+    public synchronized Comparable<?> generateKey() {//这里综合考虑了时钟回拨、同一个毫秒内请求等设计要素，从而完成了 SnowFlake 算法的具体实现。
+        long currentMilliseconds = timeService.getCurrentMillis();//获取当前时间戳
+        if (waitTolerateTimeDifferenceIfNeed(currentMilliseconds)) {//如果出现了时钟回拨，则抛出异常或进行时钟等待
             currentMilliseconds = timeService.getCurrentMillis();
         }
-        if (lastMilliseconds == currentMilliseconds) {
-            if (0L == (sequence = (sequence + 1) & SEQUENCE_MASK)) {
-                currentMilliseconds = waitUntilNextTime(currentMilliseconds);
+        if (lastMilliseconds == currentMilliseconds) {//如果上次的生成时间与本次的是同一毫秒
+            if (0L == (sequence = (sequence + 1) & SEQUENCE_MASK)) {//这个位运算保证始终就是在4096这个范围内，避免你自己传递的sequence超过了4096这个范围
+                currentMilliseconds = waitUntilNextTime(currentMilliseconds);//如果位运算结果为0，则需要等待下一个毫秒继续生成
             }
-        } else {
+        } else {//如果不是，则生成新的sequence
             vibrateSequenceOffset();
             sequence = sequenceOffset;
         }
-        lastMilliseconds = currentMilliseconds;
+        lastMilliseconds = currentMilliseconds;//先将当前时间戳左移放到完成41个bit，然后将工作进程为左移到10个bit，再将序号为放到最后的12个bit。最后拼接起来成一个64 bit的二进制数字
         return ((currentMilliseconds - EPOCH) << TIMESTAMP_LEFT_SHIFT_BITS) | (getWorkerId() << WORKER_ID_LEFT_SHIFT_BITS) | sequence;
     }
-    
+
     @SneakyThrows
     private boolean waitTolerateTimeDifferenceIfNeed(final long currentMilliseconds) {
         if (lastMilliseconds <= currentMilliseconds) {
             return false;
         }
         long timeDifferenceMilliseconds = lastMilliseconds - currentMilliseconds;
-        Preconditions.checkState(timeDifferenceMilliseconds < getMaxTolerateTimeDifferenceMilliseconds(), 
+        Preconditions.checkState(timeDifferenceMilliseconds < getMaxTolerateTimeDifferenceMilliseconds(),
                 "Clock is moving backwards, last time is %d milliseconds, current time is %d milliseconds", lastMilliseconds, currentMilliseconds);
         Thread.sleep(timeDifferenceMilliseconds);
         return true;
     }
-    
+
     private long getWorkerId() {
         long result = Long.valueOf(properties.getProperty("worker.id", String.valueOf(WORKER_ID)));
         Preconditions.checkArgument(result >= 0L && result < WORKER_ID_MAX_VALUE);
         return result;
     }
-    
+
     private int getMaxVibrationOffset() {
         int result = Integer.parseInt(properties.getProperty("max.vibration.offset", String.valueOf(DEFAULT_VIBRATION_VALUE)));
         Preconditions.checkArgument(result >= 0 && result <= SEQUENCE_MASK, "Illegal max vibration offset");
         return result;
     }
-    
+
     private int getMaxTolerateTimeDifferenceMilliseconds() {
         return Integer.valueOf(properties.getProperty("max.tolerate.time.difference.milliseconds", String.valueOf(MAX_TOLERATE_TIME_DIFFERENCE_MILLISECONDS)));
     }
-    
+
     private long waitUntilNextTime(final long lastTime) {
         long result = timeService.getCurrentMillis();
         while (result <= lastTime) {
@@ -151,7 +151,7 @@ public final class SnowflakeShardingKeyGenerator implements ShardingKeyGenerator
         }
         return result;
     }
-    
+
     private void vibrateSequenceOffset() {
         sequenceOffset = sequenceOffset >= getMaxVibrationOffset() ? 0 : sequenceOffset + 1;
     }

@@ -33,9 +33,9 @@ import java.util.ServiceLoader;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NewInstanceServiceLoader {
-    
+
     private static final Map<Class, Collection<Class<?>>> SERVICE_MAP = new HashMap<>();
-    
+
     /**
      * Register SPI service into map for new instance.
      *
@@ -44,10 +44,10 @@ public final class NewInstanceServiceLoader {
      */
     public static <T> void register(final Class<T> service) {
         for (T each : ServiceLoader.load(service)) {
-            registerServiceClass(service, each);
+            registerServiceClass(service, each);//service是接口each是实例具体类型
         }
     }
-    
+    //缓存每个接口对应的实例类型集合
     @SuppressWarnings("unchecked")
     private static <T> void registerServiceClass(final Class<T> service, final T instance) {
         Collection<Class<?>> serviceClasses = SERVICE_MAP.get(service);
@@ -57,7 +57,7 @@ public final class NewInstanceServiceLoader {
         serviceClasses.add(instance.getClass());
         SERVICE_MAP.put(service, serviceClasses);
     }
-    
+
     /**
      * New service instances.
      *
@@ -73,7 +73,7 @@ public final class NewInstanceServiceLoader {
             return result;
         }
         for (Class<?> each : SERVICE_MAP.get(service)) {
-            result.add((T) each.newInstance());
+            result.add((T) each.newInstance());//通过反射实例化
         }
         return result;
     }

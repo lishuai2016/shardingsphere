@@ -23,11 +23,11 @@ import org.apache.shardingsphere.sql.parser.api.ASTNode;
  * SQL statement.
  */
 public interface SQLStatement extends ASTNode {
-    
+
     /**
      * Get count of parameters.
      *
      * @return count of parameters
      */
-    int getParameterCount();
+    int getParameterCount();//获取参数个数
 }

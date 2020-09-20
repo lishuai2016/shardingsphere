@@ -22,31 +22,31 @@ import org.apache.shardingsphere.sql.parser.api.parser.SQLParser;
 import org.apache.shardingsphere.sql.parser.api.visitor.SQLVisitorFacade;
 
 /**
- * SQL parser configuration.
+ * SQL parser configuration. 基于spi实现SQL解析器的配置接口
  */
 public interface SQLParserConfiguration {
-    
+
     /**
      * Get name of database type.
      *
      * @return name of database type
      */
     String getDatabaseTypeName();
-    
+
     /**
      * Get SQL lexer class type.
      *
      * @return SQL lexer class type
      */
     Class<? extends SQLLexer> getLexerClass();
-    
+
     /**
      * Get SQL parser class type.
-     * 
+     *
      * @return SQL parser class type
      */
     Class<? extends SQLParser> getParserClass();
-    
+
     /**
      * Get SQL visitor facade class.
      *

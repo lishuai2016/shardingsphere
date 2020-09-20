@@ -125,17 +125,17 @@ import java.util.List;
  * DML visitor for MySQL.
  */
 public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
-    
+
     @Override
     public ASTNode visitCall(final CallContext ctx) {
         return new CallStatement();
     }
-    
+
     @Override
     public ASTNode visitDoStatement(final DoStatementContext ctx) {
         return new DoStatement();
     }
-    
+
     @Override
     public ASTNode visitInsert(final InsertContext ctx) {
         // TODO :FIXME, since there is no segment for insertValuesClause, InsertStatement is created by sub rule.
@@ -153,7 +153,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setParameterCount(getCurrentParameterIndex());
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitReplace(final ReplaceContext ctx) {
@@ -169,7 +169,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setParameterCount(getCurrentParameterIndex());
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitInsertValuesClause(final InsertValuesClauseContext ctx) {
@@ -184,7 +184,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.getValues().addAll(createInsertValuesSegments(ctx.assignmentValues()));
         return result;
     }
-    
+
     private Collection<InsertValuesSegment> createInsertValuesSegments(final Collection<AssignmentValuesContext> assignmentValuesContexts) {
         Collection<InsertValuesSegment> result = new LinkedList<>();
         for (AssignmentValuesContext each : assignmentValuesContexts) {
@@ -192,7 +192,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitOnDuplicateKeyClause(final OnDuplicateKeyClauseContext ctx) {
         Collection<AssignmentSegment> columns = new LinkedList<>();
@@ -201,7 +201,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new OnDuplicateKeyColumnsSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), columns);
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitUpdate(final UpdateContext ctx) {
@@ -217,7 +217,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setParameterCount(getCurrentParameterIndex());
         return result;
     }
-    
+
     @Override
     public ASTNode visitSetAssignmentsClause(final SetAssignmentsClauseContext ctx) {
         Collection<AssignmentSegment> assignments = new LinkedList<>();
@@ -226,7 +226,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new SetAssignmentSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), assignments);
     }
-    
+
     @Override
     public ASTNode visitAssignmentValues(final AssignmentValuesContext ctx) {
         List<ExpressionSegment> segments = new LinkedList<>();
@@ -235,14 +235,14 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new InsertValuesSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), segments);
     }
-    
+
     @Override
     public ASTNode visitAssignment(final AssignmentContext ctx) {
         ColumnSegment column = (ColumnSegment) visitColumnName(ctx.columnName());
         ExpressionSegment value = (ExpressionSegment) visit(ctx.assignmentValue());
         return new AssignmentSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), column, value);
     }
-    
+
     @Override
     public ASTNode visitAssignmentValue(final AssignmentValueContext ctx) {
         ExprContext expr = ctx.expr();
@@ -256,12 +256,12 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new CommonExpressionSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), ctx.getText());
     }
-    
+
     @Override
     public ASTNode visitBlobValue(final BlobValueContext ctx) {
         return new StringLiteralValue(ctx.STRING_().getText());
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitDelete(final DeleteContext ctx) {
@@ -277,7 +277,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setParameterCount(getCurrentParameterIndex());
         return result;
     }
-    
+
     @Override
     public ASTNode visitSingleTableClause(final SingleTableClauseContext ctx) {
         SimpleTableSegment result = (SimpleTableSegment) visit(ctx.tableName());
@@ -286,7 +286,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitMultipleTablesClause(final MultipleTablesClauseContext ctx) {
@@ -298,7 +298,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitMultipleTableNames(final MultipleTableNamesContext ctx) {
         CollectionValue<SimpleTableSegment> result = new CollectionValue<>();
@@ -307,7 +307,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitSelect(final SelectContext ctx) {
         // TODO :Unsupported for withClause.
@@ -315,16 +315,16 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setParameterCount(getCurrentParameterIndex());
         return result;
     }
-    
+
     @Override
     public ASTNode visitUnionClause(final UnionClauseContext ctx) {
         // TODO :Unsupported for union SQL.
         return visit(ctx.selectClause(0));
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
-    public ASTNode visitSelectClause(final SelectClauseContext ctx) {
+    public ASTNode visitSelectClause(final SelectClauseContext ctx) {//select语句的解析
         SelectStatement result = new SelectStatement();
         result.setProjections((ProjectionsSegment) visit(ctx.projections()));
         if (null != ctx.selectSpecification()) {
@@ -353,7 +353,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     private Collection<SimpleTableSegment> getTableSegments(final Collection<SimpleTableSegment> tableSegments, final JoinedTableContext joinedTable) {
         Collection<SimpleTableSegment> result = new LinkedList<>();
@@ -364,7 +364,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     private boolean isTable(final SimpleTableSegment owner, final Collection<SimpleTableSegment> tableSegments) {
         for (SimpleTableSegment each : tableSegments) {
             if (owner.getTableName().getIdentifier().getValue().equals(each.getAlias().orElse(null))) {
@@ -373,7 +373,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return true;
     }
-    
+
     private boolean isDistinct(final SelectClauseContext ctx) {
         for (SelectSpecificationContext each : ctx.selectSpecification()) {
             if (((BooleanLiteralValue) visit(each)).getValue()) {
@@ -382,7 +382,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return false;
     }
-    
+
     @Override
     public ASTNode visitSelectSpecification(final SelectSpecificationContext ctx) {
         if (null != ctx.duplicateSpecification()) {
@@ -390,7 +390,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new BooleanLiteralValue(false);
     }
-    
+
     @Override
     public ASTNode visitDuplicateSpecification(final DuplicateSpecificationContext ctx) {
         String text = ctx.getText();
@@ -399,7 +399,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new BooleanLiteralValue(false);
     }
-    
+
     @Override
     public ASTNode visitProjections(final ProjectionsContext ctx) {
         Collection<ProjectionSegment> projections = new LinkedList<>();
@@ -413,7 +413,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.getProjections().addAll(projections);
         return result;
     }
-    
+
     @Override
     public ASTNode visitProjection(final ProjectionContext ctx) {
         // FIXME :The stop index of project is the stop index of projection, instead of alias.
@@ -433,7 +433,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return createProjection(ctx, alias);
     }
-    
+
     @Override
     public ASTNode visitAlias(final AliasContext ctx) {
         if (null != ctx.identifier()) {
@@ -441,7 +441,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new AliasSegment(ctx.start.getStartIndex(), ctx.stop.getStopIndex(), new IdentifierValue(ctx.STRING_().getText()));
     }
-    
+
     private ASTNode createProjection(final ProjectionContext ctx, final AliasSegment alias) {
         ASTNode projection = visit(ctx.expr());
         if (projection instanceof AggregationProjectionSegment) {
@@ -475,12 +475,12 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         result.setAlias(alias);
         return result;
     }
-    
+
     @Override
     public ASTNode visitFromClause(final FromClauseContext ctx) {
         return visit(ctx.tableReferences());
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitTableReferences(final TableReferencesContext ctx) {
@@ -490,12 +490,12 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitEscapedTableReference(final EscapedTableReferenceContext ctx) {
         return visit(ctx.tableReference());
     }
-    
+
     @Override
     public ASTNode visitTableReference(final TableReferenceContext ctx) {
         TableReferenceSegment result = new TableReferenceSegment();
@@ -511,7 +511,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitTableFactor(final TableFactorContext ctx) {
         TableFactorSegment result = new TableFactorSegment();
@@ -537,7 +537,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public ASTNode visitJoinedTable(final JoinedTableContext ctx) {
@@ -549,7 +549,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitJoinSpecification(final JoinSpecificationContext ctx) {
         JoinSpecificationSegment result = new JoinSpecificationSegment();
@@ -569,11 +569,11 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     private SimpleTableSegment createTableSegment(final OwnerSegment ownerSegment) {
         return new SimpleTableSegment(ownerSegment.getStartIndex(), ownerSegment.getStopIndex(), ownerSegment.getIdentifier());
     }
-    
+
     @Override
     public ASTNode visitWhereClause(final WhereClauseContext ctx) {
         WhereSegment result = new WhereSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex());
@@ -587,7 +587,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return result;
     }
-    
+
     @Override
     public ASTNode visitGroupByClause(final GroupByClauseContext ctx) {
         Collection<OrderByItemSegment> items = new LinkedList<>();
@@ -596,7 +596,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new GroupBySegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), items);
     }
-    
+
     @Override
     public ASTNode visitLimitClause(final LimitClauseContext ctx) {
         if (null == ctx.limitOffset()) {
@@ -613,7 +613,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new LimitSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), offset, rowCount);
     }
-    
+
     @Override
     public ASTNode visitLimitRowCount(final LimitRowCountContext ctx) {
         if (null != ctx.numberLiterals()) {
@@ -621,7 +621,7 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new ParameterMarkerLimitValueSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), ((ParameterMarkerValue) visit(ctx.parameterMarker())).getValue());
     }
-    
+
     @Override
     public ASTNode visitLimitOffset(final LimitOffsetContext ctx) {
         if (null != ctx.numberLiterals()) {
@@ -629,12 +629,12 @@ public final class MySQLDMLVisitor extends MySQLVisitor implements DMLVisitor {
         }
         return new ParameterMarkerLimitValueSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex(), ((ParameterMarkerValue) visit(ctx.parameterMarker())).getValue());
     }
-    
+
     @Override
     public ASTNode visitSubquery(final SubqueryContext ctx) {
         return visit(ctx.unionClause());
     }
-    
+
     @Override
     public ASTNode visitLockClause(final LockClauseContext ctx) {
         return new LockSegment(ctx.getStart().getStartIndex(), ctx.getStop().getStopIndex());

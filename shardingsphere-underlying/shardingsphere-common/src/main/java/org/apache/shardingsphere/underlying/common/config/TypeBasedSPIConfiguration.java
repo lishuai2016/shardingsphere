@@ -28,15 +28,15 @@ import java.util.Properties;
  */
 @Getter
 public abstract class TypeBasedSPIConfiguration {
-    
-    private final String type;
-    
-    private final Properties properties;
-    
+
+    private final String type;//类型
+
+    private final Properties properties;//属性
+
     public TypeBasedSPIConfiguration(final String type) {
         this(type, null);
     }
-    
+
     public TypeBasedSPIConfiguration(final String type, final Properties properties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(type), "Type is required.");
         this.type = type;

@@ -33,24 +33,24 @@ import org.apache.shardingsphere.sql.parser.exception.SQLParsingException;
  */
 @RequiredArgsConstructor
 public final class SQLParserExecutor {
-    
+
     private final String databaseTypeName;
-    
+
     private final String sql;
-    
+
     /**
      * Execute to parse SQL.
      *
      * @return AST node
      */
-    public ParseASTNode execute() {
+    public ParseASTNode execute() {//利用ANTLR4获取解析树
         ParseASTNode result = towPhaseParse();
         if (result.getRootNode() instanceof ErrorNode) {
             throw new SQLParsingException(String.format("Unsupported SQL of `%s`", sql));
         }
         return result;
     }
-    
+
     private ParseASTNode towPhaseParse() {
         SQLParser sqlParser = SQLParserFactory.newInstance(databaseTypeName, sql);
         try {

@@ -37,24 +37,24 @@ import java.util.Optional;
  */
 @Getter
 @Setter
-public final class SelectStatement extends DMLStatement {
-    
+public final class SelectStatement extends DMLStatement {//查询语句
+
     private ProjectionsSegment projections;
-    
+
     private final Collection<TableReferenceSegment> tableReferences = new LinkedList<>();
-    
+
     private WhereSegment where;
-    
+
     private GroupBySegment groupBy;
-    
+
     private OrderBySegment orderBy;
-    
+
     private LimitSegment limit;
-    
+
     private SelectStatement parentStatement;
-    
+
     private LockSegment lock;
-    
+
     /**
      * Get where.
      *
@@ -63,16 +63,16 @@ public final class SelectStatement extends DMLStatement {
     public Optional<WhereSegment> getWhere() {
         return Optional.ofNullable(where);
     }
-    
+
     /**
      * Get group by segment.
-     * 
+     *
      * @return group by segment
      */
     public Optional<GroupBySegment> getGroupBy() {
         return Optional.ofNullable(groupBy);
     }
-    
+
     /**
      * Get order by segment.
      *
@@ -81,7 +81,7 @@ public final class SelectStatement extends DMLStatement {
     public Optional<OrderBySegment> getOrderBy() {
         return Optional.ofNullable(orderBy);
     }
-    
+
     /**
      * Get order by segment.
      *
@@ -90,7 +90,7 @@ public final class SelectStatement extends DMLStatement {
     public Optional<LimitSegment> getLimit() {
         return Optional.ofNullable(limit);
     }
-    
+
     /**
      * Get lock segment.
      *
@@ -99,10 +99,10 @@ public final class SelectStatement extends DMLStatement {
     public Optional<LockSegment> getLock() {
         return Optional.ofNullable(lock);
     }
-    
+
     /**
      * Get simple table segments.
-     * 
+     *
      * @return simple table segments
      */
     public Collection<SimpleTableSegment> getSimpleTableSegments() {

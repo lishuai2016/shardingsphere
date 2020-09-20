@@ -38,17 +38,17 @@ import java.util.Properties;
  */
 @Getter
 public abstract class AbstractRuntimeContext<T extends BaseRule> implements RuntimeContext<T> {
-    
+
     private final T rule;
-    
+
     private final ConfigurationProperties properties;
-    
+
     private final DatabaseType databaseType;
-    
+
     private final ExecutorEngine executorEngine;
-    
-    private final SQLParserEngine sqlParserEngine;
-    
+
+    private final SQLParserEngine sqlParserEngine;//sql解析引擎
+
     protected AbstractRuntimeContext(final T rule, final Properties props, final DatabaseType databaseType) {
         this.rule = rule;
         properties = new ConfigurationProperties(null == props ? new Properties() : props);
@@ -58,9 +58,9 @@ public abstract class AbstractRuntimeContext<T extends BaseRule> implements Runt
         ConfigurationLogger.log(rule.getRuleConfiguration());
         ConfigurationLogger.log(props);
     }
-    
+
     protected abstract ShardingSphereMetaData getMetaData();
-    
+
     @Override
     public void close() throws Exception {
         executorEngine.close();

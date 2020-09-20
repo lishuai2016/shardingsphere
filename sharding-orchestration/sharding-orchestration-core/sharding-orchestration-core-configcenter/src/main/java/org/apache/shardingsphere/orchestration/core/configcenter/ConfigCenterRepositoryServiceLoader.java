@@ -39,7 +39,7 @@ public final class ConfigCenterRepositoryServiceLoader extends TypeBasedSPIServi
     }
 
     /**
-     * Load config center repository from SPI.
+     * Load config center repository from SPI. 基于spi机制加载配置对象配置的配中心实例
      *
      * @param config configuration for config center
      * @return config center repository

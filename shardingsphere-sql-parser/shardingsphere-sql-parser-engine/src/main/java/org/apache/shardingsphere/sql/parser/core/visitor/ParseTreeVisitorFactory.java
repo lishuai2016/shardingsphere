@@ -28,14 +28,14 @@ import org.apache.shardingsphere.sql.parser.spi.SQLParserConfiguration;
 import org.apache.shardingsphere.sql.parser.sql.statement.SQLStatementType;
 
 /**
- * Parse tree visitor factory.
+ * Parse tree visitor factory. 访问者设计模式
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ParseTreeVisitorFactory {
-    
-    /** 
+
+    /**
      * New instance of SQL visitor.
-     * 
+     *
      * @param databaseTypeName name of database type
      * @param visitorRule visitor rule
      * @return parse tree visitor
@@ -48,11 +48,11 @@ public final class ParseTreeVisitorFactory {
         }
         throw new UnsupportedOperationException(String.format("Cannot support database type '%s'", databaseTypeName));
     }
-    
+
     @SneakyThrows
     private static ParseTreeVisitor createParseTreeVisitor(final SQLParserConfiguration configuration, final SQLStatementType type) {
         SQLVisitorFacade visitorFacade = configuration.getVisitorFacadeClass().getConstructor().newInstance();
-        switch (type) {
+        switch (type) {//SQL类型
             case DML:
                 return (ParseTreeVisitor) visitorFacade.getDMLVisitorClass().getConstructor().newInstance();
             case DDL:

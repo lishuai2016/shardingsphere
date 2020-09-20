@@ -22,15 +22,15 @@ import org.apache.shardingsphere.sql.parser.api.ASTNode;
 /**
  * SQL segment.
  */
-public interface SQLSegment extends ASTNode {
-    
+public interface SQLSegment extends ASTNode {//SQL片段的抽象
+
     /**
      * Get start index.
      *
      * @return start index
      */
     int getStartIndex();
-    
+
     /**
      * Get stop index.
      *

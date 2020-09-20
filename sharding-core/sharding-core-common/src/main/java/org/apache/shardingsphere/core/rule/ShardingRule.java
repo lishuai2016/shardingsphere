@@ -45,32 +45,32 @@ import java.util.Optional;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
-/**
- * Databases and tables sharding rule.
+/** 主要保存着与分片相关的各种规则信息，以及 ShardingKeyGenerator 等分布式主键的创建过程
+ * Databases and tables sharding rule. 从设计模式上讲，ShardingRule 也只是一个外观类，真正创建 ShardingKeyGenerator 的过程应该是在 TableRule 中。而这里的 ShardingKeyGenerator 显然就是真正生成分布式主键入口
  */
 @Getter
 public class ShardingRule implements BaseRule {
-    
-    private final ShardingRuleConfiguration ruleConfiguration;
-    
-    private final ShardingDataSourceNames shardingDataSourceNames;
-    
-    private final Collection<TableRule> tableRules;
-    
-    private final Collection<BindingTableRule> bindingTableRules;
-    
-    private final Collection<String> broadcastTables;
-    
-    private final ShardingStrategy defaultDatabaseShardingStrategy;
-    
-    private final ShardingStrategy defaultTableShardingStrategy;
-    
-    private final ShardingKeyGenerator defaultShardingKeyGenerator;
-    
-    private final Collection<MasterSlaveRule> masterSlaveRules;
-    
-    private final EncryptRule encryptRule;
-    
+
+    private final ShardingRuleConfiguration ruleConfiguration;//分片规则配置类，封装各种配置项信息
+
+    private final ShardingDataSourceNames shardingDataSourceNames;//DataSource 名称列表
+
+    private final Collection<TableRule> tableRules;//针对表的规则列表
+
+    private final Collection<BindingTableRule> bindingTableRules;//针对绑定表的规则列表
+
+    private final Collection<String> broadcastTables;//广播表名称列表
+
+    private final ShardingStrategy defaultDatabaseShardingStrategy;//默认的数据库分片策略
+
+    private final ShardingStrategy defaultTableShardingStrategy;//默认的数据表分片策略
+
+    private final ShardingKeyGenerator defaultShardingKeyGenerator;//默认的分片键生成器
+
+    private final Collection<MasterSlaveRule> masterSlaveRules;//针对读写分离的规则列表
+
+    private final EncryptRule encryptRule;//加密规则
+
     public ShardingRule(final ShardingRuleConfiguration shardingRuleConfig, final Collection<String> dataSourceNames) {
         Preconditions.checkArgument(null != shardingRuleConfig, "ShardingRuleConfig cannot be null.");
         Preconditions.checkArgument(null != dataSourceNames && !dataSourceNames.isEmpty(), "Data sources cannot be empty.");
@@ -85,47 +85,47 @@ public class ShardingRule implements BaseRule {
         masterSlaveRules = createMasterSlaveRules(shardingRuleConfig.getMasterSlaveRuleConfigs());
         encryptRule = createEncryptRule(shardingRuleConfig.getEncryptRuleConfig());
     }
-    
+
     private Collection<TableRule> createTableRules(final ShardingRuleConfiguration shardingRuleConfig) {
         return shardingRuleConfig.getTableRuleConfigs().stream().map(each ->
                 new TableRule(each, shardingDataSourceNames, getDefaultGenerateKeyColumn(shardingRuleConfig))).collect(Collectors.toList());
     }
-    
+
     private String getDefaultGenerateKeyColumn(final ShardingRuleConfiguration shardingRuleConfig) {
         return Optional.ofNullable(shardingRuleConfig.getDefaultKeyGeneratorConfig()).map(KeyGeneratorConfiguration::getColumn).orElse(null);
     }
-    
+
     private Collection<BindingTableRule> createBindingTableRules(final Collection<String> bindingTableGroups) {
         return bindingTableGroups.stream().map(this::createBindingTableRule).collect(Collectors.toList());
     }
-    
+
     private BindingTableRule createBindingTableRule(final String bindingTableGroup) {
         List<TableRule> tableRules = Splitter.on(",").trimResults().splitToList(bindingTableGroup).stream().map(this::getTableRule).collect(Collectors.toCollection(LinkedList::new));
         return new BindingTableRule(tableRules);
     }
-    
+
     private ShardingStrategy createDefaultShardingStrategy(final ShardingStrategyConfiguration shardingStrategyConfiguration) {
         return Optional.ofNullable(shardingStrategyConfiguration).map(ShardingStrategyFactory::newInstance).orElse(new NoneShardingStrategy());
     }
-    
+
     private ShardingKeyGenerator createDefaultKeyGenerator(final KeyGeneratorConfiguration keyGeneratorConfiguration) {
         ShardingKeyGeneratorServiceLoader serviceLoader = new ShardingKeyGeneratorServiceLoader();
         return containsKeyGeneratorConfiguration(keyGeneratorConfiguration)
                 ? serviceLoader.newService(keyGeneratorConfiguration.getType(), keyGeneratorConfiguration.getProperties()) : serviceLoader.newService();
     }
-    
+
     private boolean containsKeyGeneratorConfiguration(final KeyGeneratorConfiguration keyGeneratorConfiguration) {
         return null != keyGeneratorConfiguration && !Strings.isNullOrEmpty(keyGeneratorConfiguration.getType());
     }
-    
+
     private Collection<MasterSlaveRule> createMasterSlaveRules(final Collection<MasterSlaveRuleConfiguration> masterSlaveRuleConfigurations) {
         return masterSlaveRuleConfigurations.stream().map(MasterSlaveRule::new).collect(Collectors.toList());
     }
-    
+
     private EncryptRule createEncryptRule(final EncryptRuleConfiguration encryptRuleConfig) {
         return Optional.ofNullable(encryptRuleConfig).map(e -> new EncryptRule(ruleConfiguration.getEncryptRuleConfig())).orElse(new EncryptRule());
     }
-    
+
     /**
      * Find table rule.
      *
@@ -135,7 +135,7 @@ public class ShardingRule implements BaseRule {
     public Optional<TableRule> findTableRule(final String logicTableName) {
         return tableRules.stream().filter(each -> each.getLogicTable().equalsIgnoreCase(logicTableName)).findFirst();
     }
-    
+
     /**
      * Find table rule via actual table name.
      *
@@ -145,7 +145,7 @@ public class ShardingRule implements BaseRule {
     public Optional<TableRule> findTableRuleByActualTable(final String actualTableName) {
         return tableRules.stream().filter(each -> each.isExisted(actualTableName)).findFirst();
     }
-    
+
     /**
      * Get table rule.
      *
@@ -165,7 +165,7 @@ public class ShardingRule implements BaseRule {
         }
         throw new ShardingSphereConfigurationException("Cannot find table rule and default data source with logic table: '%s'", logicTableName);
     }
-    
+
     /**
      * Get database sharding strategy.
      *
@@ -179,7 +179,7 @@ public class ShardingRule implements BaseRule {
     public ShardingStrategy getDatabaseShardingStrategy(final TableRule tableRule) {
         return null == tableRule.getDatabaseShardingStrategy() ? defaultDatabaseShardingStrategy : tableRule.getDatabaseShardingStrategy();
     }
-    
+
     /**
      * Get table sharding strategy.
      *
@@ -193,7 +193,7 @@ public class ShardingRule implements BaseRule {
     public ShardingStrategy getTableShardingStrategy(final TableRule tableRule) {
         return null == tableRule.getTableShardingStrategy() ? defaultTableShardingStrategy : tableRule.getTableShardingStrategy();
     }
-    
+
     /**
      * Judge logic tables is all belong to binding encryptors.
      *
@@ -212,11 +212,11 @@ public class ShardingRule implements BaseRule {
         result.addAll(bindingTableRule.get().getAllLogicTables());
         return !result.isEmpty() && result.containsAll(logicTableNames);
     }
-    
+
     private Optional<BindingTableRule> findBindingTableRule(final Collection<String> logicTableNames) {
         return logicTableNames.stream().map(this::findBindingTableRule).filter(Optional::isPresent).findFirst().orElse(Optional.empty());
     }
-    
+
     /**
      * Find binding table rule via logic table name.
      *
@@ -226,7 +226,7 @@ public class ShardingRule implements BaseRule {
     public Optional<BindingTableRule> findBindingTableRule(final String logicTableName) {
         return bindingTableRules.stream().filter(each -> each.hasLogicTable(logicTableName)).findFirst();
     }
-    
+
     /**
      * Judge logic tables is all belong to broadcast encryptors.
      *
@@ -244,7 +244,7 @@ public class ShardingRule implements BaseRule {
         }
         return true;
     }
-    
+
     /**
      * Judge logic table is belong to broadcast tables.
      *
@@ -254,7 +254,7 @@ public class ShardingRule implements BaseRule {
     public boolean isBroadcastTable(final String logicTableName) {
         return broadcastTables.stream().anyMatch(each -> each.equalsIgnoreCase(logicTableName));
     }
-    
+
     /**
      * Judge logic tables is all belong to default data source.
      *
@@ -272,7 +272,7 @@ public class ShardingRule implements BaseRule {
         }
         return !logicTableNames.isEmpty();
     }
-    
+
     /**
      * Judge if there is at least one table rule for logic tables.
      *
@@ -282,7 +282,7 @@ public class ShardingRule implements BaseRule {
     public boolean tableRuleExists(final Collection<String> logicTableNames) {
         return logicTableNames.stream().anyMatch(each -> findTableRule(each).isPresent() || isBroadcastTable(each));
     }
-    
+
     /**
      * Judge is sharding column or not.
      *
@@ -293,11 +293,11 @@ public class ShardingRule implements BaseRule {
     public boolean isShardingColumn(final String columnName, final String tableName) {
         return tableRules.stream().anyMatch(each -> each.getLogicTable().equalsIgnoreCase(tableName) && isShardingColumn(each, columnName));
     }
-    
+
     private boolean isShardingColumn(final TableRule tableRule, final String columnName) {
         return getDatabaseShardingStrategy(tableRule).getShardingColumns().contains(columnName) || getTableShardingStrategy(tableRule).getShardingColumns().contains(columnName);
     }
-    
+
     /**
      * Find column name of generated key.
      *
@@ -308,21 +308,21 @@ public class ShardingRule implements BaseRule {
         return tableRules.stream().filter(each -> each.getLogicTable().equalsIgnoreCase(logicTableName) && each.getGenerateKeyColumn().isPresent())
                 .map(TableRule::getGenerateKeyColumn).findFirst().orElse(Optional.empty());
     }
-    
+
     /**
      * Generate key.
      *
      * @param logicTableName logic table name
      * @return generated key
      */
-    public Comparable<?> generateKey(final String logicTableName) {
-        Optional<TableRule> tableRule = findTableRule(logicTableName);
+    public Comparable<?> generateKey(final String logicTableName) {//实际生成主键
+        Optional<TableRule> tableRule = findTableRule(logicTableName);//根据传入的 logicTableName 找到对应的 TableRule
         if (!tableRule.isPresent()) {
             throw new ShardingSphereConfigurationException("Cannot find strategy for generate keys.");
-        }
+        }//从TableRule中获取ShardingKeyGenerator并生成分布式主键
         return Optional.ofNullable(tableRule.get().getShardingKeyGenerator()).orElse(defaultShardingKeyGenerator).generateKey();
     }
-    
+
     /**
      * Get logic table names based on actual table name.
      *
@@ -332,7 +332,7 @@ public class ShardingRule implements BaseRule {
     public Collection<String> getLogicTableNames(final String actualTableName) {
         return tableRules.stream().filter(each -> each.isExisted(actualTableName)).map(TableRule::getLogicTable).collect(Collectors.toCollection(LinkedList::new));
     }
-    
+
     /**
      * Find data node by logic table name.
      *
@@ -343,7 +343,7 @@ public class ShardingRule implements BaseRule {
         TableRule tableRule = getTableRule(logicTableName);
         return tableRule.getActualDataNodes().get(0);
     }
-    
+
     /**
      * Find data node by data source and logic table.
      *
@@ -357,7 +357,7 @@ public class ShardingRule implements BaseRule {
                 && each.getDataSourceName().equals(dataSourceName)).findFirst()
                 .orElseThrow(() -> new ShardingSphereConfigurationException("Cannot find actual data node for data source name: '%s' and logic table name: '%s'", dataSourceName, logicTableName));
     }
-    
+
     /**
      * Judge if default data source mame exists.
      *
@@ -367,7 +367,7 @@ public class ShardingRule implements BaseRule {
         String defaultDataSourceName = shardingDataSourceNames.getDefaultDataSourceName();
         return !Strings.isNullOrEmpty(defaultDataSourceName);
     }
-    
+
     /**
      * Find actual default data source name.
      *
@@ -383,11 +383,11 @@ public class ShardingRule implements BaseRule {
         Optional<String> masterDefaultDataSourceName = findMasterDataSourceName(defaultDataSourceName);
         return masterDefaultDataSourceName.isPresent() ? masterDefaultDataSourceName : Optional.of(defaultDataSourceName);
     }
-    
+
     private Optional<String> findMasterDataSourceName(final String masterSlaveRuleName) {
         return masterSlaveRules.stream().filter(each -> each.getName().equalsIgnoreCase(masterSlaveRuleName)).map(e -> Optional.of(e.getMasterDataSourceName())).findFirst().orElse(Optional.empty());
     }
-    
+
     /**
      * Find master slave rule.
      *
@@ -397,7 +397,7 @@ public class ShardingRule implements BaseRule {
     public Optional<MasterSlaveRule> findMasterSlaveRule(final String dataSourceName) {
         return masterSlaveRules.stream().filter(each -> each.containDataSourceName(dataSourceName)).findFirst();
     }
-    
+
     /**
      * Get sharding logic table names.
      *
@@ -407,27 +407,27 @@ public class ShardingRule implements BaseRule {
     public Collection<String> getShardingLogicTableNames(final Collection<String> logicTableNames) {
         return logicTableNames.stream().filter(each -> findTableRule(each).isPresent()).collect(Collectors.toCollection(LinkedList::new));
     }
-    
+
     /**
      * Get logic and actual binding tables.
-     * 
+     *
      * @param dataSourceName data source name
      * @param logicTable logic table name
      * @param actualTable actual table name
      * @param availableLogicBindingTables available logic binding table names
      * @return logic and actual binding tables
      */
-    public Map<String, String> getLogicAndActualTablesFromBindingTable(final String dataSourceName, 
+    public Map<String, String> getLogicAndActualTablesFromBindingTable(final String dataSourceName,
                                                                        final String logicTable, final String actualTable, final Collection<String> availableLogicBindingTables) {
         Map<String, String> result = new LinkedHashMap<>();
         findBindingTableRule(logicTable).ifPresent(
             bindingTableRule -> result.putAll(bindingTableRule.getLogicAndActualTables(dataSourceName, logicTable, actualTable, availableLogicBindingTables)));
         return result;
     }
-    
+
     /**
      * To rules.
-     * 
+     *
      * @return rules
      */
     public Collection<BaseRule> toRules() {

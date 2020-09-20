@@ -23,25 +23,25 @@ import java.util.Properties;
  * Base algorithm SPI.
  */
 public interface TypeBasedSPI {
-    
+
     /**
      * Get algorithm type.
-     * 
+     *
      * @return type
      */
-    String getType();
-    
+    String getType();//获取SPI对应的类型
+
     /**
      * Get properties.
-     * 
+     *
      * @return properties of algorithm
      */
-    Properties getProperties();
-    
+    Properties getProperties();//获取属性
+
     /**
      * Set properties.
-     * 
+     *
      * @param properties properties of algorithm
      */
-    void setProperties(Properties properties);
+    void setProperties(Properties properties);//设置属性
 }

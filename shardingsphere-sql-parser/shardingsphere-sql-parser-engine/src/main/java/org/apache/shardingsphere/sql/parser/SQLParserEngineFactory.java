@@ -28,9 +28,9 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SQLParserEngineFactory {
-    
+
     private static final Map<String, SQLParserEngine> ENGINES = new ConcurrentHashMap<>();
-    
+
     /**
      * Get SQL parser engine.
      *
@@ -42,11 +42,11 @@ public final class SQLParserEngineFactory {
             return ENGINES.get(databaseTypeName);
         }
         synchronized (ENGINES) {
-            if (ENGINES.containsKey(databaseTypeName)) {
+            if (ENGINES.containsKey(databaseTypeName)) {//如果缓存中包含了指定数据库类型对应的SQLParseEngine，则直接返回
                 return ENGINES.get(databaseTypeName);
             }
-            SQLParserEngine result = new SQLParserEngine(databaseTypeName);
-            ENGINES.put(databaseTypeName, result);
+            SQLParserEngine result = new SQLParserEngine(databaseTypeName);//创建SQLParseEngine
+            ENGINES.put(databaseTypeName, result);//将新创建的SQLParseEngine放入缓存中
             return result;
         }
     }

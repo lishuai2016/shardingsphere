@@ -34,11 +34,11 @@ import java.util.Optional;
  */
 @RequiredArgsConstructor
 public final class SQLParserEngine {
-    
+
     private final String databaseTypeName;
-    
+
     private final SQLParseResultCache cache = new SQLParseResultCache();
-    
+
     // TODO check skywalking plugin
     /*
      * To make sure SkyWalking will be available at the next release of ShardingSphere,
@@ -55,10 +55,10 @@ public final class SQLParserEngine {
      * @return SQL statement
      */
     public SQLStatement parse(final String sql, final boolean useCache) {
-        ParsingHook parsingHook = new SPIParsingHook();
+        ParsingHook parsingHook = new SPIParsingHook();//基于Hook机制进行监控和跟踪
         parsingHook.start(sql);
         try {
-            SQLStatement result = parse0(sql, useCache);
+            SQLStatement result = parse0(sql, useCache);//完成SQL的解析，并返回一个SQLStatement对象
             parsingHook.finishSuccess(result);
             return result;
             // CHECKSTYLE:OFF
@@ -68,15 +68,15 @@ public final class SQLParserEngine {
             throw ex;
         }
     }
-    
+
     private SQLStatement parse0(final String sql, final boolean useCache) {
-        if (useCache) {
+        if (useCache) {//如果使用缓存，先尝试从缓存中获取SQLStatement
             Optional<SQLStatement> cachedSQLStatement = cache.getSQLStatement(sql);
             if (cachedSQLStatement.isPresent()) {
                 return cachedSQLStatement.get();
             }
-        }
-        ParseTree parseTree = new SQLParserExecutor(databaseTypeName, sql).execute().getRootNode();
+        }//创建SQLStatement
+        ParseTree parseTree = new SQLParserExecutor(databaseTypeName, sql).execute().getRootNode();//利用ANTLR4获取解析树
         SQLStatement result = (SQLStatement) ParseTreeVisitorFactory.newInstance(databaseTypeName, VisitorRule.valueOf(parseTree.getClass())).visit(parseTree);
         if (useCache) {
             cache.put(sql, result);

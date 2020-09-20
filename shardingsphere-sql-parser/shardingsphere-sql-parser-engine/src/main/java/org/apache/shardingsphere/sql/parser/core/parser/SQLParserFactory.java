@@ -34,27 +34,27 @@ import org.apache.shardingsphere.sql.parser.spi.SQLParserConfiguration;
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SQLParserFactory {
-    
+
     static {
-        NewInstanceServiceLoader.register(SQLParserConfiguration.class);
+        NewInstanceServiceLoader.register(SQLParserConfiguration.class);//解析注册接口有哪些实现类型
     }
-    
-    /** 
+
+    /**
      * New instance of SQL parser.
-     * 
+     *
      * @param databaseTypeName name of database type
      * @param sql SQL
      * @return SQL parser
      */
     public static SQLParser newInstance(final String databaseTypeName, final String sql) {
-        for (SQLParserConfiguration each : NewInstanceServiceLoader.newServiceInstances(SQLParserConfiguration.class)) {
-            if (each.getDatabaseTypeName().equals(databaseTypeName)) {
-                return createSQLParser(sql, each);
+        for (SQLParserConfiguration each : NewInstanceServiceLoader.newServiceInstances(SQLParserConfiguration.class)) {//通过SPI机制加载所有扩展
+            if (each.getDatabaseTypeName().equals(databaseTypeName)) {//基于数据库类型匹配不同的实现类
+                return createSQLParser(sql, each);//基于解析配置生成具体的解析器
             }
         }
         throw new UnsupportedOperationException(String.format("Cannot support database type '%s'", databaseTypeName));
     }
-    
+
     @SneakyThrows
     private static SQLParser createSQLParser(final String sql, final SQLParserConfiguration configuration) {
         Lexer lexer = (Lexer) configuration.getLexerClass().getConstructor(CharStream.class).newInstance(CharStreams.fromString(sql));

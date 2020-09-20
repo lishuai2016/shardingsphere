@@ -51,30 +51,30 @@ import java.util.stream.Collectors;
 @Getter
 @ToString(exclude = {"dataNodeIndexMap", "actualTables", "actualDatasourceNames", "datasourceToTablesMap"})
 public final class TableRule {
-    
+
     private final String logicTable;
-    
+
     private final List<DataNode> actualDataNodes;
-    
+
     @Getter(AccessLevel.NONE)
     private final Set<String> actualTables;
-    
+
     @Getter(AccessLevel.NONE)
     private final Map<DataNode, Integer> dataNodeIndexMap;
-    
+
     private final ShardingStrategy databaseShardingStrategy;
-    
+
     private final ShardingStrategy tableShardingStrategy;
-    
+
     @Getter(AccessLevel.NONE)
     private final String generateKeyColumn;
-    
-    private final ShardingKeyGenerator shardingKeyGenerator;
-    
+
+    private final ShardingKeyGenerator shardingKeyGenerator;//分布式主键入口
+
     private final Collection<String> actualDatasourceNames = new LinkedHashSet<>();
-    
+
     private final Map<String, Collection<String>> datasourceToTablesMap = new HashMap<>();
-    
+
     public TableRule(final String defaultDataSourceName, final String logicTableName) {
         logicTable = logicTableName.toLowerCase();
         actualDataNodes = Collections.singletonList(new DataNode(defaultDataSourceName, logicTableName));
@@ -86,7 +86,7 @@ public final class TableRule {
         generateKeyColumn = null;
         shardingKeyGenerator = null;
     }
-    
+
     public TableRule(final Collection<String> dataSourceNames, final String logicTableName) {
         logicTable = logicTableName.toLowerCase();
         dataNodeIndexMap = new HashMap<>(dataSourceNames.size(), 1);
@@ -97,7 +97,7 @@ public final class TableRule {
         generateKeyColumn = null;
         shardingKeyGenerator = null;
     }
-    
+
     public TableRule(final TableRuleConfiguration tableRuleConfig, final ShardingDataSourceNames shardingDataSourceNames, final String defaultGenerateKeyColumn) {
         logicTable = tableRuleConfig.getLogicTable().toLowerCase();
         List<String> dataNodes = new InlineExpressionParser(tableRuleConfig.getActualDataNodes()).splitAndEvaluate();
@@ -113,30 +113,30 @@ public final class TableRule {
                 ? new ShardingKeyGeneratorServiceLoader().newService(tableRuleConfig.getKeyGeneratorConfig().getType(), tableRuleConfig.getKeyGeneratorConfig().getProperties()) : null;
         checkRule(dataNodes);
     }
-    
+
     private void cacheActualDatasourcesAndTables() {
         for (DataNode each : actualDataNodes) {
             actualDatasourceNames.add(each.getDataSourceName());
             addActualTable(each.getDataSourceName(), each.getTableName());
         }
     }
-    
+
     private Set<String> getActualTables() {
         return actualDataNodes.stream().map(DataNode::getTableName).collect(Collectors.toSet());
     }
-    
+
     private void addActualTable(final String datasourceName, final String tableName) {
         datasourceToTablesMap.computeIfAbsent(datasourceName, k -> new LinkedHashSet<>()).add(tableName);
     }
-    
+
     private boolean containsKeyGeneratorConfiguration(final TableRuleConfiguration tableRuleConfiguration) {
         return null != tableRuleConfiguration.getKeyGeneratorConfig() && !Strings.isNullOrEmpty(tableRuleConfiguration.getKeyGeneratorConfig().getType());
     }
-    
+
     private boolean isEmptyDataNodes(final List<String> dataNodes) {
         return null == dataNodes || dataNodes.isEmpty();
     }
-    
+
     private List<DataNode> generateDataNodes(final String logicTable, final Collection<String> dataSourceNames) {
         List<DataNode> result = new LinkedList<>();
         int index = 0;
@@ -150,7 +150,7 @@ public final class TableRule {
         }
         return result;
     }
-    
+
     private List<DataNode> generateDataNodes(final List<String> actualDataNodes, final Collection<String> dataSourceNames) {
         List<DataNode> result = new LinkedList<>();
         int index = 0;
@@ -167,7 +167,7 @@ public final class TableRule {
         }
         return result;
     }
-    
+
     /**
      * Get data node groups.
      *
@@ -184,7 +184,7 @@ public final class TableRule {
         }
         return result;
     }
-    
+
     /**
      * Get actual data source names.
      *
@@ -193,7 +193,7 @@ public final class TableRule {
     public Collection<String> getActualDatasourceNames() {
         return actualDatasourceNames;
     }
-    
+
     /**
      * Get actual table names via target data source name.
      *
@@ -203,24 +203,24 @@ public final class TableRule {
     public Collection<String> getActualTableNames(final String targetDataSource) {
         return datasourceToTablesMap.getOrDefault(targetDataSource, Collections.emptySet());
     }
-    
+
     int findActualTableIndex(final String dataSourceName, final String actualTableName) {
         return dataNodeIndexMap.getOrDefault(new DataNode(dataSourceName, actualTableName), -1);
     }
-    
+
     boolean isExisted(final String actualTableName) {
         return actualTables.contains(actualTableName);
     }
-    
+
     private void checkRule(final List<String> dataNodes) {
         if (isEmptyDataNodes(dataNodes) && null != tableShardingStrategy && !(tableShardingStrategy instanceof NoneShardingStrategy)) {
             throw new ShardingSphereConfigurationException("ActualDataNodes must be configured if want to shard tables for logicTable [%s]", logicTable);
         }
     }
-    
+
     /**
      * Get generate key column.
-     * 
+     *
      * @return generate key column
      */
     public Optional<String> getGenerateKeyColumn() {

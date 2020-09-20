@@ -35,37 +35,37 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Getter
 @ToString
-public final class SimpleTableSegment implements TableSegment, OwnerAvailable, AliasAvailable {
-    
+public final class SimpleTableSegment implements TableSegment, OwnerAvailable, AliasAvailable {//表抽象
+
     private final TableNameSegment tableName;
-    
+
     @Setter
     private OwnerSegment owner;
-    
+
     @Setter
     private AliasSegment alias;
-    
+
     public SimpleTableSegment(final int startIndex, final int stopIndex, final IdentifierValue identifierValue) {
         tableName = new TableNameSegment(startIndex, stopIndex, identifierValue);
     }
-    
+
     @Override
     public int getStartIndex() {
-        return null == owner ? tableName.getStartIndex() : owner.getStartIndex(); 
+        return null == owner ? tableName.getStartIndex() : owner.getStartIndex();
     }
-    
+
     @Override
     public int getStopIndex() {
         return tableName.getStopIndex();
         //FIXME: Rewriter need to handle alias as well
 //        return null == alias ? tableName.getStopIndex() : alias.getStopIndex();
     }
-    
+
     @Override
     public Optional<OwnerSegment> getOwner() {
         return Optional.ofNullable(owner);
     }
-    
+
     @Override
     public Optional<String> getAlias() {
         return null == alias ? Optional.empty() : Optional.ofNullable(alias.getIdentifier().getValue());

@@ -25,12 +25,12 @@ import org.apache.shardingsphere.spi.keygen.ShardingKeyGenerator;
  * Key generator service loader.
  */
 public final class ShardingKeyGeneratorServiceLoader extends TypeBasedSPIServiceLoader<ShardingKeyGenerator> {
-    
+
     static {
         NewInstanceServiceLoader.register(ShardingKeyGenerator.class);
     }
-    
+
     public ShardingKeyGeneratorServiceLoader() {
-        super(ShardingKeyGenerator.class);
+        super(ShardingKeyGenerator.class);//指定类型
     }
 }
